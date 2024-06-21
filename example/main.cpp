@@ -1,11 +1,11 @@
 #include <nodepp/nodepp.h>
-#include <mysql.h>
+#include <mariadb.h>
 
 using namespace nodepp;
 
 void onMain() {
 
-    mysql_t db ("mysql://usr:pass@localhost:8000","dbName");
+    mariadb_t db ("db://usr:pass@localhost:8000","dbName");
 
     db.exec(R"(
         CREATE TABLE COMPANY(
@@ -36,9 +36,9 @@ void onMain() {
         VALUES (4, 'Pipi', 32, 'California', 20000.00 );
     )");
 
-    db.exec("SELECT * from COMPANY",[]( object_t args ){
+    db.exec("SELECT * from COMPANY",[]( sql_item_t args ){
         for( auto &x: args.keys() ){
-             console::log( x, "->", args[x].as<string_t>() );
+             console::log( x, "->", args[x] );
         }
     });
 

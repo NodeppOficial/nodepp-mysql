@@ -3,12 +3,13 @@
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
-#include <mysql.h>
 #include <nodepp/url.h>
 #include <nodepp/ssl.h>
-#include <nodepp/object.h>
+#include <mariadb/mysql.h>
 
-namespace nodepp { class mysql_t {
+namespace nodepp { using sql_item_t = map_t<string_t,string_t>; }
+
+namespace nodepp { class mariadb_t {
 protected:
 
     struct NODE {
@@ -17,32 +18,31 @@ protected:
     };  ptr_t<NODE> obj;
 
     template< class T > void callback( T& cb ) { 
-        MYSQL_RES *result = mysql_store_result(obj->fd);
-        object_t arguments; array_t<string_t> col;
+        MYSQL_RES *res = mysql_store_result(obj->fd);
+        sql_item_t arguments; array_t<string_t> col;
 
-        if( result == NULL ) {
+        if( res == NULL ) {
             string_t message = mysql_error( obj->fd );
-            process::error( "SQL Error: ", message );
+            process::error( message );
         }
 
-        int num_fields = mysql_num_fields( result );
-        MYSQL_ROW row  = mysql_fetch_row( result );
+        int num_fields = mysql_num_fields( res );
+        MYSQL_ROW row  = mysql_fetch_row( res );
 
         for( int x=0; x<num_fields; x++ )
            { col.push( row[x] ); }
 
-        while( (row=mysql_fetch_row(result)) ) {
-          for( int i=0; i<num_fields; i++ ){
+        while( (row=mysql_fetch_row(res)) ) {
+          for( int x=0; x<num_fields; x++ ){
                arguments[ col[x] ] = row[x] ? row[x] : "NULL"; 
-             }
-        }
+        } cb ( arguments ); }
 
-        cb( arguments ); mysql_free_result( result );
+        mysql_free_result( res );
     }
 
 public:
     
-    virtual ~mysql_t() noexcept {
+    virtual ~mariadb_t() noexcept {
         if( obj.count() > 1 || obj->fd == nullptr ){ return; }
         if( obj->state == 0 ){ return; } free();
     }
@@ -58,7 +58,7 @@ public:
     
     /*─······································································─*/
     
-    mysql_t ( string_t uri, string_t name, ssl_t* ssl ) : obj( new NODE ) {
+    mariadb_t ( string_t uri, string_t name, ssl_t* ssl ) : obj( new NODE ) {
         obj->fd = mysql_init(NULL);
         
         if( obj->fd == nullptr )
@@ -75,14 +75,14 @@ public:
 
             mysql_ssl_set( obj->fd, key, crt, cha, NULL, NULL );
         if( mysql_real_connect( obj->fd, host.get(), user.get(), pass.get(), name.get(), port, NULL, 0 ) == NULL ){
-            string_t message = mysql_error( obj->fd ); process::error( "SQL Error: ", message );
+            string_t message = mysql_error( obj->fd ); process::error( message );
         }
 
     }
     
     /*─······································································─*/
     
-    mysql_t ( string_t uri, string_t name ) : obj( new NODE ) {
+    mariadb_t ( string_t uri, string_t name ) : obj( new NODE ) {
         obj->fd = mysql_init(NULL);
         
         if( obj->fd == nullptr )
@@ -94,24 +94,24 @@ public:
         auto port = url::port( uri );
 
         if( mysql_real_connect( obj->fd, host.get(), user.get(), pass.get(), name.get(), port, NULL, 0 ) == NULL ){
-            string_t message = mysql_error( obj->fd ); process::error( "SQL Error: ", message );
+            string_t message = mysql_error( obj->fd ); process::error( message );
         }
 
     }
     
     /*─······································································─*/
 
-    void exec( const string_t& cmd, const function_t<void,object_t>& cb ) {
+    void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) {
         if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ){
             string_t message = mysql_error( obj->fd );
-            process::error( "SQL Error: ", message );
+            process::error( message );
         }   callback( cb );
     }
 
     void exec( const string_t& cmd ) {
         if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ){
             string_t message = mysql_error( obj->fd );
-            process::error( "SQL Error: ", message );
+            process::error( message );
         }
     }
 

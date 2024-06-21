@@ -1,21 +1,26 @@
-# NODEPP-MySQL
-Run **MySQL** in Nodepp
+# NODEPP-MARIADB
+Run **MariaDB** in Nodepp
 
 ## Dependencies
-- libmysqlclient-dev
+
+- libmariadbclient-dev
   - 🪟: `pacman -S mingw-w64-x86_64-libmariadbclient`
-  - 🐧: `sudo apt install libmysqlclient-dev`
+  - 🐧: `sudo apt install libmariadb-dev`
+
+- Openssl
+  - 🪟: `pacman -S mingw-w64-ucrt-x86_64-openssl`
+  - 🐧: `sudo apt install libssl-dev`
 
 ## Example
 ```cpp
 #include <nodepp/nodepp.h>
-#include <mysql.h>
+#include <mariadb.h>
 
 using namespace nodepp;
 
 void onMain() {
 
-    mysql_t db ("mysql://usr:pass@localhost:8000","dbName");
+    mariadb_t db ("db://usr:pass@localhost:8000","dbName");
 
     db.exec(R"(
         CREATE TABLE COMPANY(
@@ -46,9 +51,9 @@ void onMain() {
         VALUES (4, 'Pipi', 32, 'California', 20000.00 );
     )");
 
-    db.exec("SELECT * from COMPANY",[]( object_t args ){
+    db.exec("SELECT * from COMPANY",[]( sql_item_t args ){
         for( auto &x: args.keys() ){
-             console::log( x, "->", args[x].as<string_t>() );
+             console::log( x, "->", args[x] );
         }
     });
 
@@ -56,4 +61,4 @@ void onMain() {
 ```
 
 ## Compilation
-`g++ -o main main.cpp -I ./include -lmysqlclient ; ./main`
+`g++ -o main main.cpp -I ./include -lmariadb -lssl -lcrypto ; ./main`
