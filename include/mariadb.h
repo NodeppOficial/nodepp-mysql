@@ -18,7 +18,7 @@ protected:
         int state = 1;
     };  ptr_t<NODE> obj;
 
-    template< class T > void callback( T& cb ) { 
+    template< class T > void callback( T& cb ) const { 
         MYSQL_RES *res = mysql_store_result(obj->fd);
         sql_item_t arguments; array_t<string_t> col;
 
@@ -101,7 +101,7 @@ public:
     
     /*─······································································─*/
 
-    void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) {
+    void exec( const string_t& cmd, const function_t<void,sql_item_t>& cb ) const {
         if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ){
             string_t message = mysql_error( obj->fd );
             process::error( message );
@@ -109,7 +109,7 @@ public:
     }
 
     void exec( const string_t& cmd ) {
-        if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ){
+        if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ) const {
             string_t message = mysql_error( obj->fd );
             process::error( message );
         }
