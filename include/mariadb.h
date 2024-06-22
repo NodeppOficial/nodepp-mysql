@@ -108,8 +108,8 @@ public:
         }   callback( cb );
     }
 
-    void exec( const string_t& cmd ) {
-        if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ) const {
+    void exec( const string_t& cmd ) const {
+        if( mysql_real_query( obj->fd, cmd.data(), cmd.size() ) != 0 ){
             string_t message = mysql_error( obj->fd );
             process::error( message );
         }
