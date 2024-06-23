@@ -14,7 +14,7 @@ namespace nodepp { class mariadb_t {
 protected:
 
     struct NODE {
-        MYSQL *fd;
+        MYSQL *fd = nullptr;
         int state = 1;
     };  ptr_t<NODE> obj;
 
@@ -22,8 +22,8 @@ protected:
         MYSQL_RES *res = mysql_store_result(obj->fd);
         sql_item_t arguments; array_t<string_t> col;
 
-        if( res == NULL ) {
-            string_t message = mysql_error( obj->fd );
+        if( res == NULL ) { //mysql_free_result( res );
+            string_t message = mysql_error(obj->fd);
             process::error( message );
         }
 
@@ -60,9 +60,8 @@ public:
     /*─······································································─*/
     
     mariadb_t ( string_t uri, string_t name, ssl_t* ssl ) : obj( new NODE ) {
-        obj->fd = mysql_init(NULL);
         
-        if( obj->fd == nullptr )
+        obj->fd = mysql_init(NULL); if( obj->fd == nullptr )
           { process::error("Error: Can't Start MySQL"); }
 
         auto host = url::hostname( uri );
@@ -70,10 +69,9 @@ public:
         auto pass = url::pass( uri );
         auto port = url::port( uri );
 
-        char* key = ssl->get_key_path()==nullptr ? nullptr : ssl->get_key_path().get();
-        char* crt = ssl->get_crt_path()==nullptr ? nullptr : ssl->get_crt_path().get();
+        char* key = ssl->get_key_path().get();
+        char* crt = ssl->get_crt_path().get(); mysql_ssl_set( obj->fd, key, crt, NULL , NULL, NULL );
 
-            mysql_ssl_set( obj->fd, key, crt, NULL , NULL, NULL );
         if( mysql_real_connect( obj->fd, host.get(), user.get(), pass.get(), name.get(), port, NULL, 0 ) == NULL ){
             string_t message = mysql_error( obj->fd ); process::error( message );
         }
@@ -83,9 +81,8 @@ public:
     /*─······································································─*/
     
     mariadb_t ( string_t uri, string_t name ) : obj( new NODE ) {
-        obj->fd = mysql_init(NULL);
         
-        if( obj->fd == nullptr )
+        obj->fd = mysql_init(NULL); if( obj->fd == nullptr )
           { process::error("Error: Can't Start MySQL"); }
 
         auto host = url::hostname( uri );
